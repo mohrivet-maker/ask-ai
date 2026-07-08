@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="ASK AI">
+  <meta name="theme-color" content="#0f766e">
+  <title>ASK AI｜もうり動物病院</title>
+  <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%230f766e'/%3E%3Ctext x='50' y='68' font-size='56' text-anchor='middle' fill='white'%3E%F0%9F%A9%BA%3C/text%3E%3C/svg%3E">
+  <style>
+    :root {
+      --teal: #0f766e; --teal-d: #115e59;
+      --bg: #f1f5f9; --card: #fff; --border: #e2e8f0;
+      --text: #1e293b; --muted: #64748b;
+      --safe-b: env(safe-area-inset-bottom, 0px);
+      --safe-t: env(safe-area-inset-top, 0px);
+    }
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    html, body { margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", sans-serif;
+      background: var(--bg); color: var(--text);
+      font-size: 15px; line-height: 1.6; -webkit-text-size-adjust: 100%;
+    }
+    header {
+      position: sticky; top: 0; z-index: 20;
+      background: linear-gradient(135deg, var(--teal), var(--teal-d)); color: #fff;
+      padding: calc(var(--safe-t) + 12px) 16px 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,.12);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    header h1 { margin: 0; font-size: 18px; font-weight: 700; letter-spacing: .02em; }
+    header .sub { font-size: 11px; opacity: .85; }
+    .hbtns { display: flex; gap: 8px; }
+    .hbtn { background: rgba(255,255,255,.18); border: none; color: #fff; width: 38px; height: 38px; border-radius: 10px; font-size: 17px; }
+    main { padding: 14px 12px calc(var(--safe-b) + 24px); max-width: 720px; margin: 0 auto; }
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 14px; margin-bottom: 14px; box-shadow: 0 1px 3px rgba(0,0,0,.04); }
+    label.fl { display: block; font-size: 12px; font-weight: 700; color: var(--muted); margin-bottom: 6px; }
+    textarea, input[type=text], input[type=password], select {
+      width: 100%; font-size: 16px; border: 1px solid var(--border); border-radius: 10px;
+      padding: 11px 12px; background: #fff; color: var(--text); font-family: inherit;
+      -webkit-appearance: none; appearance: none;
+    }
+    textarea { min-height: 92px; resize: vertical; line-height: 1.5; }
+    textarea:focus, input:focus, select:focus { outline: none; border-color: var(--teal); box-shadow: 0 0 0 3px rgba(15,118,110,.12); }
+    .row { display: flex; gap: 10px; } .row > div { flex: 1; min-width: 0; }
+    select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%2364748b' stroke-width='2' fill='none'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; padding-right: 34px; }
+    #btn-send { width: 100%; margin-top: 12px; padding: 15px; font-size: 17px; font-weight: 700; background: linear-gradient(135deg, var(--teal), var(--teal-d)); color: #fff; border: none; border-radius: 12px; box-shadow: 0 3px 10px rgba(15,118,110,.28); }
+    #btn-send:disabled { opacity: .55; }
+    #status { text-align: center; font-size: 13px; color: var(--teal); margin: 10px 0; min-height: 18px; }
+    .hidden { display: none !important; }
+    .pane-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+    .pane-title { font-size: 14px; font-weight: 700; display: flex; align-items: center; gap: 6px; }
+    .pane-title .dot { width: 9px; height: 9px; border-radius: 50%; }
+    .copy-btn { font-size: 12px; color: var(--teal); background: #f0fdfa; border: 1px solid #99f6e4; border-radius: 8px; padding: 5px 10px; }
+    .answer { font-size: 14.5px; white-space: pre-wrap; word-break: break-word; }
+    .answer:empty::before { content: "—"; color: #cbd5e1; }
+    .ask-followup-btn { -webkit-appearance: none; appearance: none; font-family: inherit; }
+    .modal { position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 50; display: flex; align-items: flex-end; }
+    .modal-box { background: #fff; width: 100%; max-height: 86vh; overflow-y: auto; border-radius: 18px 18px 0 0; padding: 16px 16px calc(var(--safe-b) + 16px); display: flex; flex-direction: column; }
+    .modal-box h2 { margin: 4px 0 4px; font-size: 16px; }
+    .modal-box p.note { margin: 0 0 12px; font-size: 12px; color: var(--muted); }
+    .modal-box textarea { flex: 1; min-height: 240px; font-size: 14px; }
+    .modal-actions { display: flex; gap: 10px; margin-top: 12px; }
+    .modal-actions button { flex: 1; padding: 13px; border-radius: 10px; font-size: 15px; font-weight: 700; border: none; }
+    .btn-primary { background: var(--teal); color: #fff; }
+    .btn-ghost { background: #f1f5f9; color: var(--text); }
+    .field { margin-bottom: 12px; }
+  </style>
+</head>
+<body>
+  <header>
+    <div>
+      <h1>🩺 ASK AI</h1>
+      <div class="sub">臨床アドバイザー（Claude × Gemini）</div>
+    </div>
+    <div class="hbtns">
+      <button id="btn-prompt" class="hbtn" title="プロンプト編集">✎</button>
+      <button id="btn-settings" class="hbtn" title="APIキー設定">⚙︎</button>
+    </div>
+  </header>
+
+  <main>
+    <div class="card">
+      <label class="fl" for="ask-question">質問</label>
+      <textarea id="ask-question" placeholder="例：猫のCKD IRISステージ2のリン制限目標値は？　薬用量・鑑別なども可"></textarea>
+
+      <div class="row" style="margin-top:10px">
+        <div>
+          <label class="fl" for="ask-model-claude">Claude モデル</label>
+          <select id="ask-model-claude">
+            <option value="claude-sonnet-4-6">Sonnet 4.6（標準）</option>
+            <option value="claude-opus-4-8">Opus 4.8（高精度）</option>
+            <option value="claude-haiku-4-5-20251001">Haiku 4.5（高速）</option>
+          </select>
+        </div>
+        <div>
+          <label class="fl" for="ask-model-gemini">Gemini モデル</label>
+          <select id="ask-model-gemini">
+            <option value="gemini-2.5-flash">2.5 Flash（標準）</option>
+            <option value="gemini-2.5-pro">2.5 Pro（高精度）</option>
+          </select>
+        </div>
+      </div>
+
+      <label class="fl" for="ask-patient" style="margin-top:10px">患者情報（任意）</label>
+      <input type="text" id="ask-patient" placeholder="例：猫 / 雑種 / 12歳">
+
+      <button id="btn-send">問い合わせる</button>
+      <div id="status"></div>
+    </div>
+
+    <div id="result-area" class="hidden">
+      <div class="card">
+        <div class="pane-head">
+          <div class="pane-title"><span class="dot" style="background:#d97706"></span>Claude</div>
+          <button class="copy-btn ask-copy-btn" data-copy="ask-answer-claude">コピー</button>
+        </div>
+        <div class="answer" id="ask-answer-claude"></div>
+      </div>
+      <div class="card">
+        <div class="pane-head">
+          <div class="pane-title"><span class="dot" style="background:#2563eb"></span>Gemini</div>
+          <button class="copy-btn ask-copy-btn" data-copy="ask-answer-gemini">コピー</button>
+        </div>
+        <div class="answer" id="ask-answer-gemini"></div>
+      </div>
+    </div>
+  </main>
+
+  <!-- APIキー設定モーダル -->
+  <div id="modal-settings" class="modal hidden">
+    <div class="modal-box">
+      <h2>APIキー設定</h2>
+      <p class="note">キーはこの端末内（localStorage）にのみ保存され、外部には送信されません。院内 <code>.env</code> の値を貼り付けてください。</p>
+      <div class="field">
+        <label class="fl" for="key-anthropic">ANTHROPIC_API_KEY（Claude）</label>
+        <input type="password" id="key-anthropic" placeholder="sk-ant-..." autocomplete="off">
+      </div>
+      <div class="field">
+        <label class="fl" for="key-gemini">GEMINI_API_KEY（Gemini・任意）</label>
+        <input type="password" id="key-gemini" placeholder="AIza..." autocomplete="off">
+      </div>
+      <div class="modal-actions">
+        <button id="btn-settings-cancel" class="btn-ghost">閉じる</button>
+        <button id="btn-settings-save" class="btn-primary">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- プロンプト編集モーダル -->
+  <div id="modal-prompt" class="modal hidden">
+    <div class="modal-box">
+      <h2>システムプロンプト編集</h2>
+      <p class="note">この端末内に保存されます。空欄で保存すると初期プロンプトに戻ります。</p>
+      <textarea id="textarea-prompt"></textarea>
+      <div class="modal-actions">
+        <button id="btn-prompt-cancel" class="btn-ghost">キャンセル</button>
+        <button id="btn-prompt-save" class="btn-primary">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+  (function () {
+    "use strict";
+
+    // ===== 初期システムプロンプト（prompt_ask.txt と同一） =====
+    const DEFAULT_PROMPT = `あなたは島根県松江市のもうり動物病院の獣医師を支援する、獣医学の臨床アドバイザーです。診察中の獣医師から、疾患・診断・治療・薬用量・鑑別などについての質問を受け取り、獣医学的に正確な情報を日本語で簡潔に回答します。読者は獣医師なので、専門用語はそのまま使って構いません。
+
+【最重要】情報の正確性とエビデンスの明示
+- 各主要な主張・推奨には、必ずエビデンスレベルを 高 / 中 / 低 の3段階で付与してください。
+- エビデンスレベルの基準:
+  - 高: 診療ガイドライン、コンセンサスステートメント（ACVIM等）、RCT、システマティックレビュー・メタ解析に基づく。
+  - 中: コホート研究、症例対照研究、比較的規模のある症例集積、確立された教科書的知見に基づく。
+  - 低: 少数の症例報告、専門家の意見、経験則、動物種をまたいだ外挿、確立されていない知見。
+- 根拠となる出典（ガイドライン名・学会・教科書・研究の種類など）を可能な限り併記してください。出典が不確かな場合は「出典不確か」と正直に明記し、低に分類してください。
+- 犬と猫、あるいは他の動物種で推奨が異なる場合は、種を明示して区別してください。
+- 薬用量を述べる場合は必ず単位・投与経路・投与間隔を明記し、体重換算が必要な旨を添えてください。用量に不確かさがあれば必ず低〜中とし、成書での確認を促してください。
+- 断定できない・エビデンスが乏しい事項は、無理に断定せず「エビデンスは限定的」と正直に述べてください。ハルシネーション（もっともらしい嘘）は厳禁です。知らないことは知らないと述べてください。
+
+【回答フォーマット】
+各項目を以下の形式の箇条書きで記載してください。行頭に必ずエビデンスレベルのタグを付けます。
+
+【高】主張の内容。（根拠: 出典）
+【中】主張の内容。（根拠: 出典）
+【低】主張の内容。（根拠: 出典）
+
+- 前置きや挨拶は不要です。要点から書いてください。
+- 過度に長くせず、臨床判断に直結する情報を優先してください。
+- 最後に、緊急性や見逃してはならない鑑別（レッドフラグ）があれば1〜2行で補足してください。
+
+【次の質問候補】（必須）
+回答の一番最後に、獣医師がさらに深掘りすると有用な関連トピックを1〜3個、必ず以下の形式で提示してください。トピックは体言止めの短いフレーズ（20文字以内目安）にしてください。「〜ですか？」等の疑問文にはしないでください。
+
+【次の質問候補】
+- トピック1（例: IRISステージ別のリン制限目標値）
+- トピック2
+- トピック3
+
+診察中に使用するローカルな表現:
+6項目: 血液生化学のAlb,Glu,ALT,ALP,BUN,Creの6項目スクリーニング。
+凝固系: PTおよびAPTT。
+G3(ジースリー): 血液ガスのpH,PCO3,HCO3,BE。
+Chem8(ケムエイト): Glu,BUN,Cre,電解質,Ht,イオン化カルシウム。`;
+
+    const LS = { A: "ask_anthropic_key", G: "ask_gemini_key", P: "ask_prompt" };
+    const getKeyA = () => localStorage.getItem(LS.A) || "";
+    const getKeyG = () => localStorage.getItem(LS.G) || "";
+    const getPrompt = () => localStorage.getItem(LS.P) || DEFAULT_PROMPT;
+
+    const $ = (id) => document.getElementById(id);
+    const questionEl = $("ask-question"), btnSend = $("btn-send"), patientEl = $("ask-patient");
+    const claudeModelEl = $("ask-model-claude"), geminiModelEl = $("ask-model-gemini");
+    const statusEl = $("status"), resultArea = $("result-area");
+    const claudeEl = $("ask-answer-claude"), geminiEl = $("ask-answer-gemini");
+
+    const escFn = (s) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    const badge = {
+      "高": "background:#dcfce7;color:#166534;border:1px solid #86efac",
+      "中": "background:#fef3c7;color:#92400e;border:1px solid #fcd34d",
+      "低": "background:#ffe4e6;color:#9f1239;border:1px solid #fda4af",
+    };
+
+    // 行頭【高/中/低】→色バッジ、末尾【次の質問候補】→フォローアップボタン
+    function renderAnswer(el, text) {
+      const raw = text || "";
+      let main = raw, topics = [];
+      const marker = "【次の質問候補】";
+      const idx = raw.lastIndexOf(marker);
+      if (idx >= 0) {
+        main = raw.slice(0, idx).trimEnd();
+        topics = raw.slice(idx + marker.length).split("\n")
+          .map((s) => s.replace(/^[\s\-・*●○◦]+/, "").trim())
+          .filter(Boolean).slice(0, 3);
+      }
+      let html = escFn(main).replace(/【\s*(高|中|低)\s*】/g, (m, lv) =>
+        `<span style="${badge[lv]};padding:1px 6px;border-radius:4px;font-weight:700;font-size:11px;margin-right:2px">${lv}</span>`);
+      if (topics.length) {
+        html += `<div style="margin-top:12px;padding-top:10px;border-top:1px dashed #99f6e4">` +
+          `<div style="font-size:11px;font-weight:700;color:#0f766e;margin-bottom:6px">💡 フォローアップ提案</div>` +
+          topics.map((t, i) =>
+            `<button type="button" class="ask-followup-btn" data-topic-idx="${i}" ` +
+            `style="display:block;text-align:left;width:100%;margin:4px 0;padding:8px 10px;border:1px solid #5eead4;border-radius:8px;background:#f0fdfa;color:#115e59;font-size:13px;white-space:normal">` +
+            `🔍 「${escFn(t)}」についてさらに調べる</button>`).join("") +
+          `</div>`;
+      }
+      el.innerHTML = html;
+      el.querySelectorAll(".ask-followup-btn").forEach((btn) => {
+        btn.onclick = () => {
+          const topic = topics[Number(btn.dataset.topicIdx)];
+          if (!topic) return;
+          const prev = questionEl.value.trim();
+          questionEl.value = prev
+            ? `先ほどの質問「${prev}」に関連して、${topic}について詳しく教えてください。`
+            : `${topic}について詳しく教えてください。`;
+          window.scrollTo({ top: 0, behavior: "smooth" });
+          btnSend.click();
+        };
+      });
+    }
+
+    // ===== Claude 直叩き（ブラウザCORS解放ヘッダ付き） =====
+    async function askClaude(system, question, model) {
+      const key = getKeyA();
+      if (!key) return { ok: false, error: "ANTHROPIC_API_KEY 未設定（⚙︎から設定）" };
+      try {
+        const res = await fetch("https://api.anthropic.com/v1/messages", {
+          method: "POST",
+          headers: {
+            "content-type": "application/json",
+            "x-api-key": key,
+            "anthropic-version": "2023-06-01",
+            "anthropic-dangerous-direct-browser-access": "true",
+          },
+          body: JSON.stringify({
+            model, max_tokens: 1500, system,
+            messages: [{ role: "user", content: question }],
+          }),
+        });
+        const data = await res.json();
+        if (!res.ok) return { ok: false, error: (data.error && data.error.message) || `HTTP ${res.status}` };
+        const txt = (data.content || []).filter((b) => b.type === "text").map((b) => b.text).join("");
+        return { ok: true, answer: txt };
+      } catch (e) { return { ok: false, error: "通信エラー: " + e.message }; }
+    }
+
+    // ===== Gemini 直叩き（REST・APIキーはURLクエリ） =====
+    async function askGemini(system, question, model) {
+      const key = getKeyG();
+      if (!key) return { ok: false, error: "GEMINI_API_KEY 未設定（⚙︎から設定）" };
+      try {
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(key)}`;
+        const res = await fetch(url, {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({
+            systemInstruction: { parts: [{ text: system }] },
+            contents: [{ role: "user", parts: [{ text: question }] }],
+            generationConfig: { maxOutputTokens: 2000 },
+          }),
+        });
+        const data = await res.json();
+        if (!res.ok) return { ok: false, error: (data.error && data.error.message) || `HTTP ${res.status}` };
+        const cand = (data.candidates || [])[0];
+        const txt = cand && cand.content && cand.content.parts
+          ? cand.content.parts.map((p) => p.text || "").join("") : "";
+        return { ok: true, answer: (txt || "").trim() };
+      } catch (e) { return { ok: false, error: "通信エラー: " + e.message }; }
+    }
+
+    function renderPane(el, res) {
+      if (res && res.ok) renderAnswer(el, res.answer);
+      else el.innerHTML = `<span style="color:#9ca3af">⚠ ${escFn((res && res.error) || "回答を取得できませんでした")}</span>`;
+    }
+
+    btnSend.onclick = async () => {
+      const question = questionEl.value.trim();
+      if (!question) { alert("質問を入力してください"); return; }
+      if (!getKeyA() && !getKeyG()) { alert("先に⚙︎からAPIキーを設定してください"); openSettings(); return; }
+
+      const patient = patientEl.value.trim();
+      const userContent = patient ? `【患者情報】${patient}\n\n【質問】\n${question}` : question;
+      const system = getPrompt();
+
+      btnSend.disabled = true;
+      const orig = btnSend.textContent;
+      btnSend.textContent = "問い合わせ中…";
+      statusEl.textContent = "● Claude と Gemini に問い合わせ中…";
+      resultArea.classList.remove("hidden");
+      claudeEl.innerHTML = '<span style="color:#9ca3af">生成中…</span>';
+      geminiEl.innerHTML = '<span style="color:#9ca3af">生成中…</span>';
+
+      // 並列に問い合わせて、各々完了次第に表示
+      const pC = askClaude(system, userContent, claudeModelEl.value).then((r) => renderPane(claudeEl, r));
+      const pG = askGemini(system, userContent, geminiModelEl.value).then((r) => renderPane(geminiEl, r));
+      await Promise.allSettled([pC, pG]);
+
+      statusEl.textContent = "";
+      btnSend.disabled = false;
+      btnSend.textContent = orig;
+    };
+
+    document.querySelectorAll(".ask-copy-btn").forEach((btn) => {
+      btn.onclick = () => {
+        const v = $(btn.dataset.copy).innerText;
+        if (!v || v === "—") return;
+        navigator.clipboard.writeText(v).then(() => {
+          const o = btn.textContent; btn.textContent = "コピー済み ✓";
+          setTimeout(() => { btn.textContent = o; }, 1500);
+        });
+      };
+    });
+
+    // ===== APIキー設定モーダル =====
+    const mSet = $("modal-settings");
+    function openSettings() {
+      $("key-anthropic").value = getKeyA();
+      $("key-gemini").value = getKeyG();
+      mSet.classList.remove("hidden");
+    }
+    $("btn-settings").onclick = openSettings;
+    $("btn-settings-cancel").onclick = () => mSet.classList.add("hidden");
+    mSet.addEventListener("click", (e) => { if (e.target === mSet) mSet.classList.add("hidden"); });
+    $("btn-settings-save").onclick = () => {
+      const a = $("key-anthropic").value.trim(), g = $("key-gemini").value.trim();
+      if (a) localStorage.setItem(LS.A, a); else localStorage.removeItem(LS.A);
+      if (g) localStorage.setItem(LS.G, g); else localStorage.removeItem(LS.G);
+      mSet.classList.add("hidden");
+    };
+
+    // ===== プロンプト編集モーダル =====
+    const mPrompt = $("modal-prompt"), taPrompt = $("textarea-prompt");
+    $("btn-prompt").onclick = () => { taPrompt.value = getPrompt(); mPrompt.classList.remove("hidden"); };
+    $("btn-prompt-cancel").onclick = () => mPrompt.classList.add("hidden");
+    mPrompt.addEventListener("click", (e) => { if (e.target === mPrompt) mPrompt.classList.add("hidden"); });
+    $("btn-prompt-save").onclick = () => {
+      const p = taPrompt.value.trim();
+      if (p) localStorage.setItem(LS.P, p); else localStorage.removeItem(LS.P);
+      mPrompt.classList.add("hidden");
+    };
+
+    // 初回起動時にキー未設定なら設定を促す
+    if (!getKeyA() && !getKeyG()) setTimeout(openSettings, 400);
+  })();
+  </script>
+</body>
+</html>
