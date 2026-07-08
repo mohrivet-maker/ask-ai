@@ -70,6 +70,24 @@
     .btn-primary { background: var(--teal); color: #fff; }
     .btn-ghost { background: #f1f5f9; color: var(--text); }
     .field { margin-bottom: 12px; }
+    /* タブ */
+    .tabs { display: flex; gap: 6px; background: #e2e8f0; padding: 4px; border-radius: 12px; margin-bottom: 14px; }
+    .tab { flex: 1; padding: 10px; border: none; background: transparent; border-radius: 9px; font-size: 14px; font-weight: 700; color: var(--muted); }
+    .tab.active { background: #fff; color: var(--teal); box-shadow: 0 1px 3px rgba(0,0,0,.1); }
+    /* ディスカッション */
+    #btn-disc-start { width: 100%; margin-top: 12px; padding: 15px; font-size: 17px; font-weight: 700; background: linear-gradient(135deg, var(--teal), var(--teal-d)); color: #fff; border: none; border-radius: 12px; box-shadow: 0 3px 10px rgba(15,118,110,.28); }
+    #btn-disc-start:disabled { opacity: .55; }
+    #disc-status { text-align: center; font-size: 13px; color: var(--teal); margin: 10px 0 0; min-height: 18px; }
+    .disc-msg { margin-bottom: 12px; }
+    .disc-name { font-size: 11px; font-weight: 700; margin-bottom: 4px; display: flex; align-items: center; gap: 6px; color: var(--muted); }
+    .disc-name .dot { width: 9px; height: 9px; border-radius: 50%; }
+    .disc-bubble { border-radius: 14px; padding: 11px 13px; font-size: 14px; line-height: 1.55; white-space: pre-wrap; word-break: break-word; display: inline-block; max-width: 92%; }
+    .disc-msg.claude .disc-bubble { background: #fff7ed; border: 1px solid #fed7aa; border-top-left-radius: 4px; }
+    .disc-msg.gemini { text-align: right; }
+    .disc-msg.gemini .disc-name { justify-content: flex-end; }
+    .disc-msg.gemini .disc-bubble { background: #eff6ff; border: 1px solid #bfdbfe; border-top-right-radius: 4px; text-align: left; }
+    .disc-round-sep { text-align: center; font-size: 11px; color: #94a3b8; margin: 16px 0; }
+    #disc-more-wrap button { padding: 13px; border-radius: 10px; font-weight: 700; border: none; font-size: 15px; }
   </style>
 </head>
 <body>
@@ -85,6 +103,12 @@
   </header>
 
   <main>
+    <div class="tabs">
+      <button class="tab active" id="tab-ask" data-tab="ask">💬 相談</button>
+      <button class="tab" id="tab-disc" data-tab="disc">🗣️ ディスカッション</button>
+    </div>
+
+    <div id="view-ask">
     <div class="card">
       <label class="fl" for="ask-question">質問</label>
       <textarea id="ask-question" placeholder="例：猫のCKD IRISステージ2のリン制限目標値は？　薬用量・鑑別なども可"></textarea>
@@ -130,6 +154,53 @@
         <div class="answer" id="ask-answer-gemini"></div>
       </div>
     </div>
+    </div><!-- /view-ask -->
+
+    <div id="view-disc" class="hidden">
+      <div class="card">
+        <label class="fl" for="disc-topic">ディスカッションのテーマ</label>
+        <textarea id="disc-topic" placeholder="例：高齢猫の甲状腺機能亢進症に、内科管理と放射性ヨウ素治療のどちらを第一選択とすべきか"></textarea>
+
+        <label class="fl" for="disc-patient" style="margin-top:10px">患者情報（任意）</label>
+        <input type="text" id="disc-patient" placeholder="例：猫 / 雑種 / 15歳 / T4高値">
+
+        <div class="row" style="margin-top:10px">
+          <div>
+            <label class="fl" for="disc-model-claude">Claude（若手）</label>
+            <select id="disc-model-claude">
+              <option value="claude-sonnet-4-6">Sonnet 4.6（標準）</option>
+              <option value="claude-opus-4-8">Opus 4.8（高精度）</option>
+              <option value="claude-haiku-4-5-20251001">Haiku 4.5（高速）</option>
+            </select>
+          </div>
+          <div>
+            <label class="fl" for="disc-model-gemini">Gemini（ベテラン）</label>
+            <select id="disc-model-gemini">
+              <option value="gemini-2.5-flash">2.5 Flash（標準）</option>
+              <option value="gemini-2.5-pro">2.5 Pro（高精度）</option>
+            </select>
+          </div>
+        </div>
+
+        <label class="fl" for="disc-rounds" style="margin-top:10px">1区切りの往復数</label>
+        <select id="disc-rounds">
+          <option value="2">2往復（4発言）</option>
+          <option value="3" selected>3往復（6発言）</option>
+          <option value="4">4往復（8発言）</option>
+        </select>
+
+        <button id="btn-disc-start">ディスカッション開始</button>
+        <div id="disc-status"></div>
+        <p class="note" style="margin-top:10px">✎ ボタンから、若手・ベテランそれぞれのキャラクター（役割）を編集できます。両AIが交互に約100字で意見を述べ合います。</p>
+      </div>
+
+      <div id="disc-log"></div>
+
+      <div id="disc-more-wrap" class="hidden" style="display:flex;gap:10px;margin-bottom:14px">
+        <button id="btn-disc-continue" class="btn-ghost" style="flex:1">▶︎ さらに続ける</button>
+        <button id="btn-disc-copy" class="btn-ghost" style="flex:1">全文コピー</button>
+      </div>
+    </div><!-- /view-disc -->
   </main>
 
   <!-- APIキー設定モーダル -->
@@ -161,6 +232,26 @@
       <div class="modal-actions">
         <button id="btn-prompt-cancel" class="btn-ghost">キャンセル</button>
         <button id="btn-prompt-save" class="btn-primary">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ディスカッション キャラクター編集モーダル -->
+  <div id="modal-chars" class="modal hidden">
+    <div class="modal-box">
+      <h2>ディスカッションのキャラクター設定</h2>
+      <p class="note">それぞれの役割（人格）を設定できます。この端末内に保存され、空欄で保存すると初期設定に戻ります。</p>
+      <div class="field">
+        <label class="fl" for="ta-char-claude"><span style="color:#d97706">●</span> Claude の役割（若手獣医師）</label>
+        <textarea id="ta-char-claude" style="min-height:120px"></textarea>
+      </div>
+      <div class="field">
+        <label class="fl" for="ta-char-gemini"><span style="color:#2563eb">●</span> Gemini の役割（ベテラン獣医師）</label>
+        <textarea id="ta-char-gemini" style="min-height:120px"></textarea>
+      </div>
+      <div class="modal-actions">
+        <button id="btn-chars-cancel" class="btn-ghost">キャンセル</button>
+        <button id="btn-chars-save" class="btn-primary">保存</button>
       </div>
     </div>
   </div>
@@ -208,10 +299,24 @@
 G3(ジースリー): 血液ガスのpH,PCO3,HCO3,BE。
 Chem8(ケムエイト): Glu,BUN,Cre,電解質,Ht,イオン化カルシウム。`;
 
-    const LS = { A: "ask_anthropic_key", G: "ask_gemini_key", P: "ask_prompt" };
+    // ===== ディスカッション用 初期キャラクター =====
+    const DEFAULT_CHAR_CLAUDE = `あなたはリスクを取ってでも目の前の生命を救うことに情熱を燃やす、優秀で行動力のある若手獣医師です。最新の治療やアグレッシブな選択肢にも前向きで、情熱的かつ攻めの姿勢で意見を述べます。`;
+    const DEFAULT_CHAR_GEMINI = `あなたは数々の辛酸をなめてきた堅実なベテラン獣医師です。合併症やリスク、飼い主の負担・経済性・動物のQOL、エビデンスを重視し、慎重で現実的な視点から落ち着いて意見を述べます。`;
+    const DISC_RULES = `
+
+【ディスカッションのルール】
+あなたは「もうり動物病院」の症例検討会で、もう一人の獣医師と交互に意見を述べ合っています。
+- 発言は日本語で100字程度（最大150字）。要点を1つに絞り簡潔に述べてください。
+- 直前の相手の発言を踏まえ、賛成・反対・補足・懸念などを具体的に述べ、議論を前に進めてください。同じ主張の繰り返しは避けます。
+- 前置き・自己紹介・箇条書きは不要。設定されたキャラクターになりきり、一人称の話し言葉で述べてください。
+- 医学的に不正確な断定やハルシネーション（もっともらしい嘘）は避けてください。`;
+
+    const LS = { A: "ask_anthropic_key", G: "ask_gemini_key", P: "ask_prompt", DC: "ask_disc_claude", DG: "ask_disc_gemini" };
     const getKeyA = () => localStorage.getItem(LS.A) || "";
     const getKeyG = () => localStorage.getItem(LS.G) || "";
     const getPrompt = () => localStorage.getItem(LS.P) || DEFAULT_PROMPT;
+    const getCharC = () => localStorage.getItem(LS.DC) || DEFAULT_CHAR_CLAUDE;
+    const getCharG = () => localStorage.getItem(LS.DG) || DEFAULT_CHAR_GEMINI;
 
     const $ = (id) => document.getElementById(id);
     const questionEl = $("ask-question"), btnSend = $("btn-send"), patientEl = $("ask-patient");
@@ -373,15 +478,148 @@ Chem8(ケムエイト): Glu,BUN,Cre,電解質,Ht,イオン化カルシウム。`
       mSet.classList.add("hidden");
     };
 
+    // ===== タブ切替 =====
+    const tabAsk = $("tab-ask"), tabDisc = $("tab-disc");
+    const viewAsk = $("view-ask"), viewDisc = $("view-disc");
+    let activeTab = "ask";
+    function setTab(t) {
+      activeTab = t;
+      const isAsk = t === "ask";
+      tabAsk.classList.toggle("active", isAsk);
+      tabDisc.classList.toggle("active", !isAsk);
+      viewAsk.classList.toggle("hidden", !isAsk);
+      viewDisc.classList.toggle("hidden", isAsk);
+    }
+    tabAsk.onclick = () => setTab("ask");
+    tabDisc.onclick = () => setTab("disc");
+
     // ===== プロンプト編集モーダル =====
     const mPrompt = $("modal-prompt"), taPrompt = $("textarea-prompt");
-    $("btn-prompt").onclick = () => { taPrompt.value = getPrompt(); mPrompt.classList.remove("hidden"); };
     $("btn-prompt-cancel").onclick = () => mPrompt.classList.add("hidden");
     mPrompt.addEventListener("click", (e) => { if (e.target === mPrompt) mPrompt.classList.add("hidden"); });
     $("btn-prompt-save").onclick = () => {
       const p = taPrompt.value.trim();
       if (p) localStorage.setItem(LS.P, p); else localStorage.removeItem(LS.P);
       mPrompt.classList.add("hidden");
+    };
+
+    // ===== キャラクター編集モーダル =====
+    const mChars = $("modal-chars");
+    $("btn-chars-cancel").onclick = () => mChars.classList.add("hidden");
+    mChars.addEventListener("click", (e) => { if (e.target === mChars) mChars.classList.add("hidden"); });
+    $("btn-chars-save").onclick = () => {
+      const c = $("ta-char-claude").value.trim(), g = $("ta-char-gemini").value.trim();
+      if (c) localStorage.setItem(LS.DC, c); else localStorage.removeItem(LS.DC);
+      if (g) localStorage.setItem(LS.DG, g); else localStorage.removeItem(LS.DG);
+      mChars.classList.add("hidden");
+    };
+
+    // ✎ ボタンはタブに応じて開くモーダルを切替
+    $("btn-prompt").onclick = () => {
+      if (activeTab === "disc") {
+        $("ta-char-claude").value = getCharC();
+        $("ta-char-gemini").value = getCharG();
+        mChars.classList.remove("hidden");
+      } else {
+        taPrompt.value = getPrompt();
+        mPrompt.classList.remove("hidden");
+      }
+    };
+
+    // ===== ディスカッション =====
+    const discTopicEl = $("disc-topic"), discPatientEl = $("disc-patient");
+    const discCModelEl = $("disc-model-claude"), discGModelEl = $("disc-model-gemini");
+    const discRoundsEl = $("disc-rounds"), discLogEl = $("disc-log"), discStatusEl = $("disc-status");
+    const btnDiscStart = $("btn-disc-start"), discMoreWrap = $("disc-more-wrap");
+    const btnDiscMore = $("btn-disc-continue"), btnDiscCopy = $("btn-disc-copy");
+    let discTranscript = []; // {who:'claude'|'gemini'|'sep'|'err', text}
+
+    const discMsgs = () => discTranscript.filter((m) => m.who === "claude" || m.who === "gemini");
+    const discNameOf = (who) => who === "claude" ? "若手（Claude）" : "ベテラン（Gemini）";
+
+    function discRender() {
+      discLogEl.innerHTML = discTranscript.map((m) => {
+        if (m.who === "sep") return `<div class="disc-round-sep">— ここで一区切り —</div>`;
+        if (m.who === "err") return `<div style="color:#9ca3af;font-size:13px;text-align:center;margin:8px 0">⚠ ${escFn(m.text)}</div>`;
+        const dot = m.who === "claude" ? "#d97706" : "#2563eb";
+        return `<div class="disc-msg ${m.who}"><div class="disc-name"><span class="dot" style="background:${dot}"></span>${discNameOf(m.who)}</div>` +
+          `<div class="disc-bubble">${escFn(m.text)}</div></div>`;
+      }).join("");
+    }
+
+    function buildDiscUser(who) {
+      const topic = discTopicEl.value.trim(), patient = discPatientEl.value.trim();
+      let s = `【テーマ】${topic}`;
+      if (patient) s += `\n【患者情報】${patient}`;
+      s += `\n\n【これまでの議論】\n`;
+      const msgs = discMsgs();
+      s += msgs.length
+        ? msgs.map((m) => `${m.who === "claude" ? "若手" : "ベテラン"}: ${m.text}`).join("\n")
+        : "（まだ発言はありません。あなたが口火を切ってください。）";
+      s += `\n\nあなた（${who === "claude" ? "若手獣医師" : "ベテラン獣医師"}）の番です。上記を踏まえ、100字程度で次の意見を述べてください。`;
+      return s;
+    }
+
+    async function discSpeak(who) {
+      return who === "claude"
+        ? askClaude(getCharC() + DISC_RULES, buildDiscUser("claude"), discCModelEl.value)
+        : askGemini(getCharG() + DISC_RULES, buildDiscUser("gemini"), discGModelEl.value);
+    }
+
+    async function runDiscussion(rounds) {
+      const turns = rounds * 2;
+      btnDiscStart.disabled = true; btnDiscMore.disabled = true;
+      discMoreWrap.classList.add("hidden");
+      for (let i = 0; i < turns; i++) {
+        const who = (discMsgs().length % 2 === 0) ? "claude" : "gemini";
+        discStatusEl.textContent = `● ${discNameOf(who)} が発言中…（${i + 1}/${turns}）`;
+        const r = await discSpeak(who);
+        if (!r || !r.ok || !(r.answer && r.answer.trim())) {
+          discTranscript.push({ who: "err", text: (r && r.error) || (discNameOf(who) + "の発言を取得できませんでした") });
+          discRender();
+          discStatusEl.textContent = "";
+          btnDiscStart.disabled = false; btnDiscMore.disabled = false;
+          discMoreWrap.classList.toggle("hidden", discMsgs().length === 0);
+          return false;
+        }
+        discTranscript.push({ who, text: r.answer.trim() });
+        discRender();
+        window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
+      }
+      discTranscript.push({ who: "sep" });
+      discRender();
+      discStatusEl.textContent = "";
+      discMoreWrap.classList.remove("hidden");
+      btnDiscStart.disabled = false; btnDiscMore.disabled = false;
+      return true;
+    }
+
+    btnDiscStart.onclick = async () => {
+      const topic = discTopicEl.value.trim();
+      if (!topic) { alert("ディスカッションのテーマを入力してください"); return; }
+      if (!getKeyA() || !getKeyG()) { alert("ディスカッションには Claude と Gemini 両方のAPIキーが必要です（⚙︎から設定）"); openSettings(); return; }
+      discTranscript = [];
+      discLogEl.innerHTML = "";
+      const orig = btnDiscStart.textContent;
+      btnDiscStart.textContent = "ディスカッション中…";
+      await runDiscussion(Number(discRoundsEl.value) || 3);
+      btnDiscStart.textContent = orig;
+    };
+
+    btnDiscMore.onclick = async () => {
+      if (!discMsgs().length) return;
+      await runDiscussion(Number(discRoundsEl.value) || 3);
+    };
+
+    btnDiscCopy.onclick = () => {
+      const msgs = discMsgs();
+      if (!msgs.length) return;
+      const text = `【テーマ】${discTopicEl.value.trim()}\n\n` +
+        msgs.map((m) => `${discNameOf(m.who)}: ${m.text}`).join("\n\n");
+      navigator.clipboard.writeText(text).then(() => {
+        const o = btnDiscCopy.textContent; btnDiscCopy.textContent = "コピー済み ✓";
+        setTimeout(() => { btnDiscCopy.textContent = o; }, 1500);
+      });
     };
 
     // 初回起動時にキー未設定なら設定を促す
