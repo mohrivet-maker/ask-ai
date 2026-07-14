@@ -117,7 +117,7 @@
         <div>
           <label class="fl" for="ask-model-claude">Claude モデル</label>
           <select id="ask-model-claude">
-            <option value="claude-sonnet-4-6">Sonnet 4.6（標準）</option>
+            <option value="claude-sonnet-4-6" selected>Sonnet 4.6（標準）</option>
             <option value="claude-opus-4-8">Opus 4.8（高精度）</option>
             <option value="claude-haiku-4-5-20251001">Haiku 4.5（高速）</option>
           </select>
@@ -125,7 +125,7 @@
         <div>
           <label class="fl" for="ask-model-gemini">Gemini モデル</label>
           <select id="ask-model-gemini">
-            <option value="gemini-2.5-flash">2.5 Flash（標準）</option>
+            <option value="gemini-2.5-flash" selected>2.5 Flash（標準）</option>
             <option value="gemini-2.5-pro">2.5 Pro（高精度）</option>
           </select>
         </div>
@@ -168,7 +168,7 @@
           <div>
             <label class="fl" for="disc-model-claude">Claude（若手）</label>
             <select id="disc-model-claude">
-              <option value="claude-sonnet-4-6">Sonnet 4.6（標準）</option>
+              <option value="claude-sonnet-4-6" selected>Sonnet 4.6（標準）</option>
               <option value="claude-opus-4-8">Opus 4.8（高精度）</option>
               <option value="claude-haiku-4-5-20251001">Haiku 4.5（高速）</option>
             </select>
@@ -176,7 +176,7 @@
           <div>
             <label class="fl" for="disc-model-gemini">Gemini（ベテラン）</label>
             <select id="disc-model-gemini">
-              <option value="gemini-2.5-flash">2.5 Flash（標準）</option>
+              <option value="gemini-2.5-flash" selected>2.5 Flash（標準）</option>
               <option value="gemini-2.5-pro">2.5 Pro（高精度）</option>
             </select>
           </div>
@@ -400,13 +400,21 @@ Chem8(ケムエイト): Glu,BUN,Cre,電解質,Ht,イオン化カルシウム。`
       if (!key) return { ok: false, error: "GEMINI_API_KEY 未設定（⚙︎から設定）" };
       try {
         const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(key)}`;
+        // Gemini 2.5 は思考(thinking)モデル。maxOutputTokens は「思考＋回答」の合計枠のため、
+        // 従来の 2000 では思考トークンが枠を食い潰し、回答が途中で切れて末尾の
+        // 【次の質問候補】が消えていた。枠を広げ、思考量を抑える。
+        // flash は思考を無効化(0)、pro は完全停止できないため控えめに(1024)。
+        const genConfig = {
+          maxOutputTokens: 8192,
+          thinkingConfig: { thinkingBudget: model && model.includes("pro") ? 1024 : 0 },
+        };
         const res = await fetch(url, {
           method: "POST",
           headers: { "content-type": "application/json" },
           body: JSON.stringify({
             systemInstruction: { parts: [{ text: system }] },
             contents: [{ role: "user", parts: [{ text: question }] }],
-            generationConfig: { maxOutputTokens: 2000 },
+            generationConfig: genConfig,
           }),
         });
         const data = await res.json();
